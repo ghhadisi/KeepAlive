@@ -7,72 +7,89 @@
 #include <android/log.h>
 #include <malloc.h>
 #include <unistd.h>
+
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <errno.h>
+#include <linux/signal.h>
 #define LOG_TAG "tuch"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+
+int user_id;
 extern "C"{
-    JNIEXPORT void JNICALL
-    Java_com_dbgs_uninstallfeedbacklibrary_UninstallFeedbackUtil_load(
-            JNIEnv *env,
-            jobject /* this */,jint sdk, jstring  path) {
-        pid_t pid = fork();
-        if (pid <0){
-            LOGD("fork err");
-        } else if (pid >0){
-            LOGD("old process");
-
-        }else {
-            LOGD("new process");
-            const char *pPath = (char *) env->GetStringUTFChars(path, 0);
-
-            //**************** 可忽略****************************************
-            int observer = open(pPath, O_RDONLY);
-            if (observer == -1) {
-//            创建 文件  observedFile    线程  1   2 轮询  observerFile
-                observer = open(pPath, O_CREAT);
-            }
-            //******************* 可忽略*************************************
-
-            //    初始化  inotify linux  可以监听文件的状态
-            int fileDescriple = inotify_init();
-            int watch = inotify_add_watch(fileDescriple, pPath, IN_DELETE_SELF);//IN_ALL_EVENTS
-            if (watch < 0) {
-                LOGD("监听失败");
-                exit(0);
-            }
-            void *p_buf = malloc(sizeof(struct inotify_event));
-            //        阻塞式函数  anr
-            size_t readBytes = read(fileDescriple, p_buf, sizeof(struct inotify_event));
-
-//            执行到下面来了    文件发生了改变  用户卸载了 app
-            LOGD("监听类型 %d    ,%d",((struct inotify_event *) p_buf)->mask,IN_DELETE_SELF);
-//            inotify_rm_watch(fileDescriple, watch);
-            if (((struct inotify_event *) p_buf)->mask == IN_DELETE_SELF) {
-//////                覆盖安装
-                FILE *app_file = fopen(pPath, "r");
-                if (app_file == NULL) {
-                    //   删除app   移除监听
-                    inotify_rm_watch(fileDescriple, watch);
-                } else{
-                    //   覆盖安装    重新进行监听
-                    fclose(app_file);
-                    FILE *p_observelFile = fopen(pPath, "w");
-                    int watchDescip=inotify_add_watch(fileDescriple, pPath, IN_DELETE_SELF);
-                }
-            }
-//        LOGD("跳转网页");
-////        铁了心要删除app  sdk   17   am  设置到环境变量   多用户的操作
-            if (sdk < 17) {
-                execlp("am", "am", "start", "-a", "android.intent.action.VIEW", "-d",
-                       "http://www.baidu.com",NULL);
-
-            } else{
-                execlp("am", "am", "start","--user","0","-a", "android.intent.action.VIEW", "-d",
-                       "http://www.baidu.com",NULL);
-            }
-
-            free(p_buf);
-            env->ReleaseStringChars(path, (const jchar *) pPath);
-
-        }
+void start_polling(const char * service_name);
+void create_child(JNIEnv *env, jstring serviceName){
+    pid_t pid = fork();
+    if (pid <0){
+        LOGD("fork err");
+    } else if (pid >0){
+        LOGD("old process");
+    }else {
+        LOGD("new process");
+        const char * service_name = ( char *) env->GetStringUTFChars(serviceName, NULL);
+        start_polling(service_name);
+        env->ReleaseStringChars(serviceName, (const jchar *) service_name);
     }
+}
+//子进程变成僵尸进程会调用这个方法
+void sig_handler(int sino) {
+    int status;
+    //    阻塞式函数
+    LOGD("等待死亡信号");
+    wait(&status);
+    LOGD("创建进程");
+//    create_child(env,serviceName);
+
+}
+
+    JNIEXPORT void JNICALL
+    Java_com_dbgs_keeplive_pollinglibrary_Polling_createWatcher(
+            JNIEnv *env,
+            jobject /* this */,jint userId, jstring serviceName) {
+         user_id = userId;
+
+
+        //    //为了防止子进程被弄成僵尸进程   不要    1
+//    struct  sigaction sa;
+//    sa.sa_flags=0;
+//
+//    sa.sa_handler = sig_handler;
+//    sigaction(SIGCHLD, &sa, NULL);
+
+        create_child(env,serviceName);
+    }
+
+
+
+    void* thread_run(void *data){
+        pid_t  pid ;
+        while ((pid = getppid()) !=1){
+            sleep(2);
+        }
+        execlp("am", "am", "startservice", "--user", user_id,
+               (char*)data, (char*)NULL);
+    }
+//开启线程轮询
+    void start_polling(const char * service_name)
+    {
+        pthread_t  thread;
+
+       int result = pthread_create(&thread, NULL, thread_run, (void *) service_name);
+        LOGD("pthread_create = d%", result);
+/*
+ * 第一个参数为指向线程标识符的指针。
+第二个参数用来设置线程属性。
+第三个参数是线程运行函数的起始地址。
+最后一个参数是运行函数的参数。
+ * int pthread_create(pthread_t *tidp,const pthread_attr_t *attr,
+ * 若线程创建成功，则返回0。若线程创建失败，则返回出错编号，并且*thread中的内容是未定义的。
+ */
+    }
+
+
 }

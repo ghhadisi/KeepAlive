@@ -8,6 +8,6 @@ public class Polling {
     static {
         System.loadLibrary("polling_keeplive-lib");
     }
-    public native void createWatcher(int userId);
+    public native void createWatcher(int userId, String serviceName);
 
 }

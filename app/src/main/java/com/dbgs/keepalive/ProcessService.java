@@ -7,6 +7,8 @@ import android.os.Process;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.dbgs.keeplive.pollinglibrary.Polling;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -29,6 +31,9 @@ public class ProcessService extends Service {
         super.onCreate();
 //        Wathcer wathcer=new Wathcer();
 //        wathcer.createWatcher(Process.myUid());
+        Polling polling = new Polling();
+        // "com.dongnao.signalprocess/com.dongnao.signalprocess.ProcessService"
+        polling.createWatcher(Process.myPid(),"com.dbgs.keepalive/com.dbgs.keepalive.ProcessService");
         Timer timer = new Timer();
         //定时器
         timer.scheduleAtFixedRate(
