@@ -1,1 +1,1 @@
-include ':app', ':pollinglibrary'
+include ':app', ':pollinglibrary', ':java2process'
