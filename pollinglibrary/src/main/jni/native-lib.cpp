@@ -20,8 +20,11 @@
 #define LOG_TAG "tuch"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
-int user_id;
-extern "C"{
+char * user_id;
+
+
+
+extern "C" {
 void start_polling(const char * service_name);
 void create_child(JNIEnv *env, jstring serviceName){
     pid_t pid = fork();
@@ -50,8 +53,8 @@ void sig_handler(int sino) {
     JNIEXPORT void JNICALL
     Java_com_dbgs_keeplive_pollinglibrary_Polling_createWatcher(
             JNIEnv *env,
-            jobject /* this */,jint userId, jstring serviceName) {
-         user_id = userId;
+            jobject /* this */,jstring userId, jstring serviceName) {
+         user_id = (char *) env->GetStringUTFChars(userId, NULL);
 
 
         //    //为了防止子进程被弄成僵尸进程   不要    1
@@ -82,7 +85,7 @@ void sig_handler(int sino) {
        int result = pthread_create(&thread, NULL, thread_run, (void *) service_name);
         LOGD("pthread_create = d%", result);
 /*
- * 第一个参数为指向线程标识符的指针。
+ * 第 一个参数为指向线程标识符的指针。
 第二个参数用来设置线程属性。
 第三个参数是线程运行函数的起始地址。
 最后一个参数是运行函数的参数。
