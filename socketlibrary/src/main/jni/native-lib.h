@@ -21,8 +21,3 @@
 #include <android/log.h>
 #define LOG_TAG "tuch"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-void create_child();
-void child_do_work();
-
-int child_create_channel();
-void child_listen_msg();

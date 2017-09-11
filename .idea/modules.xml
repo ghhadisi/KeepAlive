@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/KeepAlive.iml" filepath="$PROJECT_DIR$/KeepAlive.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/java2process/java2process.iml" filepath="$PROJECT_DIR$/java2process/java2process.iml" />
-      <module fileurl="file://$PROJECT_DIR$/keepAlive.iml" filepath="$PROJECT_DIR$/keepAlive.iml" />
       <module fileurl="file://$PROJECT_DIR$/pollinglibrary/pollinglibrary.iml" filepath="$PROJECT_DIR$/pollinglibrary/pollinglibrary.iml" />
       <module fileurl="file://$PROJECT_DIR$/socketlibrary/socketlibrary.iml" filepath="$PROJECT_DIR$/socketlibrary/socketlibrary.iml" />
     </modules>
